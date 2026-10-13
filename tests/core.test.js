@@ -201,3 +201,85 @@ test("KPIs reflect states and resolution", () => {
   const k = EK.kpis(w.s);
   assert.strictEqual(k.verified, 1); assert.strictEqual(k.resolved, 1); assert.strictEqual(k.resolutionRate, 100);
 });
+
+/* ---------- profile, levels, badges, leaderboard, quests ---------- */
+const QUESTS = [
+  { id: "d_review2", period: "daily", goal: "review", count: 2, xp: 5 },
+  { id: "d_file1", period: "daily", goal: "file", count: 1, xp: 5 },
+  { id: "f_waste", period: "festive", goal: "file", category: "waste", count: 1, xp: 25, from: "2026-10-12", to: "2026-10-21" }
+];
+test("levels are computed from XP with progress to the next level", () => {
+  assert.strictEqual(EK.levelFor(0).name, "Seed");
+  const l = EK.levelFor(40);
+  assert.strictEqual(l.name, "Sprout"); assert.strictEqual(l.nextName, "Sapling");
+  assert.strictEqual(l.progress, Math.round(((40 - 25) / (60 - 25)) * 100));
+  assert.strictEqual(EK.levelFor(9999).progress, 100);
+});
+test("profile accepts emoji, initials and small photos; rejects unknown or huge images", () => {
+  const { s, rep } = world(1);
+  EK.setProfile(s, rep.id, { avatar: { type: "emoji", value: EK.AVATARS[0] } });
+  assert.strictEqual(rep.avatar.type, "emoji");
+  EK.setProfile(s, rep.id, { avatar: { type: "initials" } });
+  EK.setProfile(s, rep.id, { avatar: { type: "photo", value: "data:image/jpeg;base64,AAAA" } });
+  assert.throws(() => EK.setProfile(s, rep.id, { avatar: { type: "emoji", value: "x" } }), /Unknown/);
+  assert.throws(() => EK.setProfile(s, rep.id, { avatar: { type: "photo", value: "http://evil.example/x.png" } }), /small image/);
+  assert.throws(() => EK.setProfile(s, rep.id, { avatar: { type: "photo", value: "data:image/png;base64," + "A".repeat(90000) } }), /small image/);
+});
+test("leaderboard is opt-in, public-profile only, and ordered by XP", () => {
+  const w = world(); const r = toAwaiting(w); EK.officialApprove(w.s, r.id, w.off.id, D);
+  assert.strictEqual(EK.leaderboard(w.s).length, 0);
+  EK.setProfile(w.s, w.rep.id, { showOnLeaderboard: true });
+  EK.setProfile(w.s, w.peers[0].id, { showOnLeaderboard: true });
+  const lb = EK.leaderboard(w.s);
+  assert.strictEqual(lb[0].pseudonym, "Rep"); assert.strictEqual(lb[0].xp, 10);
+  assert.strictEqual(lb[1].xp, 5);
+  EK.setProfile(w.s, w.rep.id, { isProfilePublic: false });
+  assert.strictEqual(EK.leaderboard(w.s).some(x => x.pseudonym === "Rep"), false);
+  assert.strictEqual(EK.leaderboard(w.s, "P4").length, 0);
+});
+test("badges unlock from verified outcomes", () => {
+  const w = world(); const r = toAwaiting(w);
+  assert.strictEqual(EK.badgesFor(w.s, w.rep.id).find(b => b.id === "first_light").earned, false);
+  EK.officialApprove(w.s, r.id, w.off.id, D);
+  assert.strictEqual(EK.badgesFor(w.s, w.rep.id).find(b => b.id === "first_light").earned, true);
+});
+test("daily quest progress counts reviews done today only", () => {
+  const w = world(); w.s.quests = QUESTS; const q = QUESTS[0];
+  const r = EK.submitReport(w.s, w.rep.id, { ...draft, day: D });
+  EK.confirmReport(w.s, r.id, w.peers[0].id, D);
+  assert.strictEqual(EK.questProgress(w.s, w.peers[0].id, q, D).progress, 1);
+  assert.strictEqual(EK.questProgress(w.s, w.peers[0].id, q, "2026-10-15").progress, 0);
+  assert.throws(() => EK.claimQuest(w.s, w.peers[0].id, "d_review2", D), /not complete/);
+});
+test("claiming a quest gives XP once per period, never ledger points", () => {
+  const w = world(); w.s.quests = QUESTS;
+  EK.submitReport(w.s, w.rep.id, { ...draft, day: D });
+  assert.strictEqual(EK.questProgress(w.s, w.rep.id, QUESTS[1], D).status, "ready");
+  EK.claimQuest(w.s, w.rep.id, "d_file1", D);
+  assert.strictEqual(EK.questXp(w.s, w.rep.id), 5);
+  assert.strictEqual(EK.balance(w.s, w.rep.id), 0);
+  assert.strictEqual(EK.totalXp(w.s, w.rep.id), 5);
+  assert.throws(() => EK.claimQuest(w.s, w.rep.id, "d_file1", D), /Already/);
+  EK.submitReport(w.s, w.rep.id, { ...draft, text: "A second distinct report for tomorrow", day: "2026-10-15" });
+  EK.claimQuest(w.s, w.rep.id, "d_file1", "2026-10-15");
+  assert.strictEqual(EK.questXp(w.s, w.rep.id), 10);
+});
+test("festive quest only works inside its window and by category", () => {
+  const w = world(); w.s.quests = QUESTS; const q = QUESTS[2];
+  EK.submitReport(w.s, w.rep.id, { ...draft, day: "2026-10-14" });
+  assert.strictEqual(EK.questProgress(w.s, w.rep.id, q, "2026-10-14").status, "ready");
+  assert.strictEqual(EK.questProgress(w.s, w.rep.id, q, "2026-10-01").status, "upcoming");
+  assert.strictEqual(EK.questProgress(w.s, w.rep.id, q, "2026-11-01").status, "ended");
+  EK.claimQuest(w.s, w.rep.id, "f_waste", "2026-10-14");
+  assert.ok(EK.badgesFor(w.s, w.rep.id).find(b => b.id === "festival_spirit").earned);
+});
+test("officials cannot claim quests", () => {
+  const w = world(); w.s.quests = QUESTS;
+  assert.throws(() => EK.claimQuest(w.s, w.off.id, "d_file1", D), /residents/);
+});
+test("sample quest file is valid", () => {
+  const q = require("../data/quests.json").quests; const ids = new Set();
+  q.forEach(x => { assert.ok(x.id && x.title && x.text && x.xp > 0 && x.count > 0); assert.ok(!ids.has(x.id)); ids.add(x.id);
+    assert.ok(["daily", "monthly", "yearly", "festive"].includes(x.period)); assert.ok(["review", "file", "verified"].includes(x.goal));
+    if (x.period === "festive") assert.ok(x.from <= x.to); });
+});
