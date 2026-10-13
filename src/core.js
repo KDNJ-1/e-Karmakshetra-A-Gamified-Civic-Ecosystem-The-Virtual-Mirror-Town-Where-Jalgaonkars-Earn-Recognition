@@ -37,12 +37,12 @@
   });
 
   function newState(prabhags) {
-    return { users: [], reports: [], ledger: [], audit: [], seq: 1, prabhags: prabhags || [],
+    return { users: [], reports: [], ledger: [], audit: [], questClaims: [], quests: [], seq: 1, prabhags: prabhags || [],
              config: { peersNeeded: RULES.PEERS_NEEDED_DEFAULT } };
   }
   const nid = (s, p) => p + (s.seq++);
   const norm = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => { const d = new Date(); const z = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }; // local date (India-friendly)
   const find = (arr, id) => arr.find(x => x.id === id);
 
   function ageBracket(age) {
@@ -71,7 +71,8 @@
     if (state.users.find(u => norm(u.pseudonym) === norm(pseudonym))) throw new Error("Pseudonym already taken");
     const user = { id: nid(state, "u"), name, pseudonym, prabhag: o.prabhag, age: o.age, ageBracket: ageBracket(o.age),
       role: o.role && ROLES[o.role] ? o.role : "spotter", official: !!o.official, isSaathi: !!o.isSaathi,
-      isProfilePublic: o.isProfilePublic !== false, verified: !!o.official };
+      isProfilePublic: o.isProfilePublic !== false, showOnLeaderboard: !!o.showOnLeaderboard,
+      avatar: { type: "initials", value: "" }, verified: !!o.official };
     state.users.push(user);
     audit(state, user.id, "REGISTER", user.id);
     return user;
@@ -180,7 +181,7 @@
     if (!o || !o.official) throw new Error("Only an official can approve");
     if (!r) throw new Error("Report not found");
     if (r.status !== STATUS.AWAITING) throw new Error("Report is not awaiting official review");
-    r.status = STATUS.VERIFIED; audit(state, officialId, "OFFICIAL_APPROVE", r.id, "", day);
+    r.status = STATUS.VERIFIED; r.verifiedDay = day; audit(state, officialId, "OFFICIAL_APPROVE", r.id, "", day);
     mint(state, r.reporterId, "verified_" + r.kind, RULES.KIND_POINTS[r.kind], r.id, day);
     if (r.isSaathiAssisted) mint(state, r.reporterId, "saathi_bonus", RULES.SAATHI_BONUS, r.id, day);
     r.confirmations.forEach(pid => mint(state, pid, "peer_confirmation", RULES.PEER_POINTS, r.id, day));
@@ -225,6 +226,89 @@
   const sessionAllowed = (u, minutes) => minutes < sessionLimit(u);
   const breakDue = (minutes) => minutes > 0 && minutes % RULES.BREAK_EVERY_MIN === 0;
 
+
+  /* ---------- profile, levels, badges, leaderboard, quests (recognition only; never money) ---------- */
+  const AVATARS = Object.freeze(["\u{1F989}", "\u{1F42F}", "\u{1F99A}", "\u{1F338}", "\u{1F418}", "\u{1F981}", "\u{1F333}", "☀️", "\u{1FA94}", "\u{1F3F9}"]);
+  const LEVELS = Object.freeze([
+    { name: "Seed", xp: 0 }, { name: "Sprout", xp: 25 }, { name: "Sapling", xp: 60 },
+    { name: "Tree", xp: 120 }, { name: "Grove", xp: 220 }, { name: "Forest", xp: 400 }]);
+
+  function setProfile(state, userId, o) {
+    const u = find(state.users, userId); if (!u) throw new Error("User not found");
+    if (o.avatar) {
+      const a = o.avatar;
+      if (a.type === "emoji") { if (!AVATARS.includes(a.value)) throw new Error("Unknown avatar"); }
+      else if (a.type === "photo") {
+        if (typeof a.value !== "string" || !a.value.startsWith("data:image/") || a.value.length > 80000) throw new Error("Photo must be a small image");
+      } else if (a.type !== "initials") throw new Error("Unknown avatar type");
+      u.avatar = { type: a.type, value: a.type === "initials" ? "" : a.value };
+    }
+    if (typeof o.isProfilePublic === "boolean") u.isProfilePublic = o.isProfilePublic;
+    if (typeof o.showOnLeaderboard === "boolean") u.showOnLeaderboard = o.showOnLeaderboard;
+    return u;
+  }
+
+  const questXp = (state, uid) => (state.questClaims || []).filter(c => c.userId === uid).reduce((s, c) => s + c.xp, 0);
+  const totalXp = (state, uid) => Math.max(0, balance(state, uid) + questXp(state, uid));
+  function levelFor(xp) {
+    let i = 0; LEVELS.forEach((l, k) => { if (xp >= l.xp) i = k; });
+    const cur = LEVELS[i], nxt = LEVELS[i + 1] || null;
+    return { index: i, level: i + 1, name: cur.name, xp, floor: cur.xp, next: nxt ? nxt.xp : null, nextName: nxt ? nxt.name : null,
+      progress: nxt ? Math.round(((xp - cur.xp) / (nxt.xp - cur.xp)) * 100) : 100 };
+  }
+
+  const BADGES = Object.freeze([
+    { id: "first_light", icon: "\u{1F31F}", name: "First Light", how: "Get one of your own submissions verified" },
+    { id: "peer_guardian", icon: "\u{1F6E1}️", name: "Peer Guardian", how: "Be one of the peers on 3 verified submissions" },
+    { id: "saathi_hero", icon: "\u{1F91D}", name: "Digital Saathi", how: "Get a Saathi-assisted submission verified" },
+    { id: "pilot_pioneer", icon: "\u{1F9EA}", name: "Pilot Pioneer", how: "Get a pilot proof verified" },
+    { id: "quest_hunter", icon: "\u{1F3AF}", name: "Quest Hunter", how: "Claim 3 quests" },
+    { id: "festival_spirit", icon: "\u{1FA94}", name: "Festival Spirit", how: "Claim a festive quest" }]);
+  function badgesFor(state, uid) {
+    const own = state.reports.filter(r => r.reporterId === uid && r.status === STATUS.VERIFIED);
+    const asPeer = state.reports.filter(r => r.status === STATUS.VERIFIED && r.confirmations.includes(uid)).length;
+    const claims = (state.questClaims || []).filter(c => c.userId === uid);
+    const has = {
+      first_light: own.length >= 1, peer_guardian: asPeer >= 3,
+      saathi_hero: own.some(r => r.isSaathiAssisted), pilot_pioneer: own.some(r => r.kind === "pilot"),
+      quest_hunter: claims.length >= 3, festival_spirit: claims.some(c => c.period === "festive") };
+    return BADGES.map(b => Object.assign({ earned: !!has[b.id] }, b));
+  }
+
+  function leaderboard(state, prabhagId) {
+    return state.users.filter(u => u.verified && !u.official && u.showOnLeaderboard && u.isProfilePublic && (!prabhagId || u.prabhag === prabhagId))
+      .map(u => ({ userId: u.id, pseudonym: u.pseudonym, prabhag: u.prabhag, avatar: u.avatar, xp: totalXp(state, u.id), level: levelFor(totalXp(state, u.id)).name }))
+      .sort((a, b) => b.xp - a.xp || a.pseudonym.localeCompare(b.pseudonym));
+  }
+
+  /* quests: data-driven (data/quests.json). Rewards are Quest XP: recognition and levels only, never ledger points or money. */
+  function questWindow(q, now) {
+    if (q.period === "daily") return { from: now, to: now, key: now };
+    if (q.period === "monthly") return { from: now.slice(0, 7) + "-01", to: now.slice(0, 7) + "-31", key: now.slice(0, 7) };
+    if (q.period === "yearly") return { from: now.slice(0, 4) + "-01-01", to: now.slice(0, 4) + "-12-31", key: now.slice(0, 4) };
+    return { from: q.from, to: q.to, key: q.id };   // festive / special event
+  }
+  const inWin = (d, w) => d >= w.from && d <= w.to;
+  function questProgress(state, uid, q, now) {
+    now = now || today(); const w = questWindow(q, now); let n = 0;
+    if (q.goal === "review") n = state.audit.filter(a => a.actorId === uid && (a.action === "PEER_CONFIRM" || a.action === "FLAG_FAKE") && inWin(a.day, w)).length;
+    else if (q.goal === "file") n = state.reports.filter(r => r.reporterId === uid && inWin(r.day, w) && (!q.category || r.category === q.category) && (!q.kind || r.kind === q.kind)).length;
+    else if (q.goal === "verified") n = state.reports.filter(r => r.reporterId === uid && r.status === STATUS.VERIFIED && r.verifiedDay && inWin(r.verifiedDay, w) && (!q.category || r.category === q.category)).length;
+    const claimed = (state.questClaims || []).some(c => c.userId === uid && c.questId === q.id && c.periodKey === w.key);
+    const status = claimed ? "claimed" : now < w.from ? "upcoming" : now > w.to ? "ended" : n >= q.count ? "ready" : "active";
+    return { questId: q.id, progress: Math.min(n, q.count), goal: q.count, status, window: w };
+  }
+  function claimQuest(state, uid, questId, now) {
+    now = now || today();
+    const q = state.quests.find(x => x.id === questId); if (!q) throw new Error("Quest not found");
+    const u = find(state.users, uid); if (!u || !u.verified || u.official) throw new Error("Only verified residents can claim quests");
+    const p = questProgress(state, uid, q, now);
+    if (p.status === "claimed") throw new Error("Already claimed for this period");
+    if (p.status !== "ready") throw new Error("Quest is not complete yet");
+    const c = Object.freeze({ id: nid(state, "q"), userId: uid, questId, period: q.period, periodKey: p.window.key, xp: q.xp, day: now });
+    state.questClaims.push(c); audit(state, uid, "QUEST_CLAIM", questId, "+" + q.xp + " XP", now); return c;
+  }
+
   function kpis(state) {
     const by = (s) => state.reports.filter(r => r.status === s).length;
     const verified = by(STATUS.VERIFIED), resolved = state.reports.filter(r => r.resolved).length;
@@ -236,5 +320,6 @@
 
   return { ROLES, RULES, CATEGORIES, STATUS, ageBracket, newState, registerUser, verifyUser, setRole, submitReport, confirmReport,
     flagReport, reviseReport, officialApprove, officialReject, markResolved, setPeersNeeded, offsetEntry, publicView, officialView,
-    sessionLimit, sessionAllowed, breakDue, balance, earnedToday, kpis };
+    sessionLimit, sessionAllowed, breakDue, balance, earnedToday, kpis,
+    AVATARS, LEVELS, BADGES, setProfile, totalXp, questXp, levelFor, badgesFor, leaderboard, questProgress, claimQuest };
 });
