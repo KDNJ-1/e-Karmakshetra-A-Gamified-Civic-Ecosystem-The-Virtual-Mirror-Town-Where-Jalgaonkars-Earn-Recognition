@@ -17,6 +17,16 @@ recognition points**, with a privacy-preserving public map.
 - Two-layer map (Prabhag centroids vs exact positions)
 - Session limits by age bracket and 20-minute wellness prompts
 
+## 2b. Game layer (recognition, not money)
+- **Levels:** Seed, Sprout, Sapling, Tree, Grove, Forest, computed from XP = ledger points + Quest XP.
+- **Quests:** daily, monthly, yearly and festive or special-event quests read from `data/quests.json`. Rewards are **Quest XP only**: they raise levels and badges but never enter the points ledger and never become money. Quests are claimable once per period.
+- **Badges:** computed from verified outcomes (First Light, Peer Guardian, Digital Saathi, Pilot Pioneer, Quest Hunter, Festival Spirit).
+- **Leaderboard:** opt-in, requires a public profile, shows pseudonym, level and XP only.
+- **No streak penalties, no random rewards, no countdown pressure.** Session limits and break prompts remain.
+- **Profile pictures:** emoji badge, initials, or an uploaded photo shrunk to 96 px and stored in the browser only (limit 80 KB).
+- **Effects and sound:** generated in the browser, switchable, and disabled automatically when the device asks for reduced motion.
+- **Festive dates:** Navratri to Dussehra 12 to 21 Oct 2026 and Diwali 8 Nov 2026 are from public calendars and follow the panchang; they are indicative.
+
 ## 3. Design refinements made to the first architecture draft
 | Draft | Refinement | Why |
 | --- | --- | --- |
@@ -37,10 +47,10 @@ peer 5 · Saathi bonus 5 · daily cap 40 · filings per day 5 · session 60 min 
 All values are design choices to be tuned in the pilot.
 
 ## 5. Testing
-25 automated tests (`npm test`) cover: adult gate, bracket boundaries, duplicates, role-matched filing, rate limit, the
+34 automated tests (`npm test`) cover: adult gate, bracket boundaries, duplicates, role-matched filing, rate limit, the
 10-peer threshold, self/double review, no points before approval, approval minting, kind-based points, rejection,
 official-only actions, flag strikes, revision, four strikes to tribunal, Saathi filing, daily cap, frozen ledger and offsets,
-public vs official map views, anonymous profiles, session limits, audit trail, threshold control and KPIs.
+public vs official map views, anonymous profiles, session limits, audit trail, threshold control and KPIs, plus levels, profile pictures, opt-in leaderboard, badges and quests (periods, windows, claim once, XP never touches the ledger).
 
 ## 6. Value ladder (policy, not code)
 Recognition and certificates, then local vouchers, then sponsor-paid honoraria, then wider redemption only after legal review.
