@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e-Karmakshetra: Virtual Mirror Town (Prototype)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>e-Karmakshetra</h1>
+    <p class="sub">Virtual mirror town for participatory governance. <strong>Prototype with fictional sample data.</strong></p>
+  </div>
+  <div class="who">
+    <label for="userSel">Acting as</label>
+    <select id="userSel"></select>
+    <span id="session" class="pill"></span>
+    <button id="resetBtn" class="ghost">Reset demo</button>
+  </div>
+</header>
+<nav id="tabs" role="tablist"></nav>
+<main id="view" tabindex="-1"></main>
+<footer>
+  Open source (MIT). Prabhags, centroids and people are invented; not official JCMC data. Points are recognition for verified
+  outcomes, not money. The public map shows Prabhag-level pins only; exact positions are visible to officials.
+</footer>
+<script src="src/core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

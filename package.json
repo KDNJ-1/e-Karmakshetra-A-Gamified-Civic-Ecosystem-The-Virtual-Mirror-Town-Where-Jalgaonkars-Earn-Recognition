@@ -1,0 +1,7 @@
+{
+  "name": "e-karmakshetra",
+  "version": "2.0.0",
+  "description": "Virtual mirror town prototype: verified, privacy-preserving civic participation (Hack for Social Cause 2027)",
+  "license": "MIT",
+  "scripts": { "test": "node --test tests/core.test.js", "start": "python3 -m http.server 8000" }
+}
