@@ -1,0 +1,31 @@
+{
+  "_note": "FICTIONAL sample data. Prabhag names, centroids and people are invented for demonstration and are NOT official JCMC boundaries. Coordinates are illustrative points near Jalgaon. No real citizen data.",
+  "prabhags": [
+    { "id": "P1", "name": "Prabhag 1 (sample)", "lat": 21.0200, "lng": 75.5500 },
+    { "id": "P2", "name": "Prabhag 2 (sample)", "lat": 21.0200, "lng": 75.5850 },
+    { "id": "P3", "name": "Prabhag 3 (sample)", "lat": 21.0050, "lng": 75.5400 },
+    { "id": "P4", "name": "Prabhag 4 (sample)", "lat": 21.0025, "lng": 75.5810 },
+    { "id": "P5", "name": "Prabhag 5 (sample)", "lat": 20.9880, "lng": 75.5650 }
+  ],
+  "users": [
+    { "name": "Official Demo", "pseudonym": "JCMC-Official", "prabhag": "P4", "age": 38, "official": true },
+    { "name": "Asha Demo", "pseudonym": "Asha-P4", "prabhag": "P4", "age": 24, "role": "spotter" },
+    { "name": "Bhushan Demo", "pseudonym": "Bhushan-P2", "prabhag": "P2", "age": 29, "role": "solver" },
+    { "name": "Chitra Demo", "pseudonym": "Chitra-P3", "prabhag": "P3", "age": 41, "role": "promoter" },
+    { "name": "Dinesh Demo", "pseudonym": "Dinesh-P1", "prabhag": "P1", "age": 22, "role": "pilot" },
+    { "name": "Esha Demo", "pseudonym": "Esha-P5", "prabhag": "P5", "age": 27, "role": "spotter", "isSaathi": true },
+    { "name": "Farid Demo", "pseudonym": "Farid-P4", "prabhag": "P4", "age": 33, "role": "spotter" },
+    { "name": "Gauri Demo", "pseudonym": "Gauri-P2", "prabhag": "P2", "age": 52, "role": "deliverer" },
+    { "name": "Harsh Demo", "pseudonym": "Harsh-P3", "prabhag": "P3", "age": 26, "role": "spotter" },
+    { "name": "Ira Demo", "pseudonym": "Ira-P1", "prabhag": "P1", "age": 31, "role": "spotter" },
+    { "name": "Jay Demo", "pseudonym": "Jay-P5", "prabhag": "P5", "age": 63, "role": "spotter" },
+    { "name": "Kavya Demo", "pseudonym": "Kavya-P4", "prabhag": "P4", "age": 45, "role": "spotter" },
+    { "name": "Lalit Demo", "pseudonym": "Lalit-P2", "prabhag": "P2", "age": 36, "role": "spotter" }
+  ],
+  "reports": [
+    { "by": "Asha Demo", "category": "waste", "text": "Overflowing bin near the sample market gate", "lat": 21.0031, "lng": 75.5822, "peers": 10, "approve": true },
+    { "by": "Farid Demo", "category": "traffic", "text": "Signal not working at the sample junction", "lat": 21.0019, "lng": 75.5798, "peers": 10 },
+    { "by": "Ira Demo", "category": "mobility", "text": "Broken footpath near the sample bus stop", "lat": 21.0212, "lng": 75.5488, "peers": 4 },
+    { "by": "Bhushan Demo", "category": "idea", "kind": "solution", "text": "Propose segregated bins with ward volunteers at the sample market", "lat": 21.0188, "lng": 75.5861, "peers": 0 }
+  ]
+}
