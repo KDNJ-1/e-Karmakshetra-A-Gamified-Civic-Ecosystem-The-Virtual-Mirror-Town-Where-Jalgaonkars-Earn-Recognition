@@ -1,0 +1,15 @@
+{
+  "_note": "Quests give Quest XP (recognition and levels only; never ledger points or money). Edit this file to add quests. Festive dates for 2026-27 are indicative: Navratri/Dussehra and Diwali dates follow the panchang, so verify them before relying on them. Windows are inclusive ISO dates.",
+  "quests": [
+    { "id": "d_review2", "period": "daily", "title": "Fair Eye", "text": "Review 2 submissions (confirm or flag, honestly)", "goal": "review", "count": 2, "xp": 5 },
+    { "id": "d_file1", "period": "daily", "title": "Eyes Open", "text": "File 1 submission with photo evidence", "goal": "file", "count": 1, "xp": 5 },
+    { "id": "m_guardian", "period": "monthly", "title": "Neighbourhood Guardian", "text": "Review 15 submissions this month", "goal": "review", "count": 15, "xp": 20 },
+    { "id": "m_verified2", "period": "monthly", "title": "Proof of Impact", "text": "Get 2 of your submissions verified this month", "goal": "verified", "count": 2, "xp": 30 },
+    { "id": "y_impact12", "period": "yearly", "title": "Year of Impact", "text": "Get 12 of your submissions verified this year", "goal": "verified", "count": 12, "xp": 100 },
+    { "id": "f_dussehra26", "period": "festive", "title": "Dussehra Cleansing Drive", "text": "File 2 waste reports during Navratri to Dussehra", "goal": "file", "category": "waste", "count": 2, "xp": 25, "from": "2026-10-12", "to": "2026-10-21", "event": "Navratri to Dussehra 2026" },
+    { "id": "f_diwali26", "period": "festive", "title": "Diwali e-Cleanup", "text": "File 3 waste reports before and after Diwali", "goal": "file", "category": "waste", "count": 3, "xp": 30, "from": "2026-11-01", "to": "2026-11-10", "event": "Diwali 2026 (8 Nov)" },
+    { "id": "f_republic27", "period": "festive", "title": "My Ward, My Republic", "text": "Propose 1 solution for your ward", "goal": "file", "kind": "solution", "count": 1, "xp": 25, "from": "2027-01-20", "to": "2027-01-26", "event": "Republic Day 2027" },
+    { "id": "f_mahadin27", "period": "festive", "title": "Maharashtra Day Local Hero", "text": "File 1 submission about your Prabhag", "goal": "file", "count": 1, "xp": 20, "from": "2027-04-24", "to": "2027-05-01", "event": "Maharashtra Day 2027" },
+    { "id": "f_independence27", "period": "festive", "title": "Self-Reliant Project", "text": "File 1 pilot proof of a self-reliant local project", "goal": "file", "kind": "pilot", "count": 1, "xp": 35, "from": "2027-08-08", "to": "2027-08-15", "event": "Independence Day 2027" }
+  ]
+}
