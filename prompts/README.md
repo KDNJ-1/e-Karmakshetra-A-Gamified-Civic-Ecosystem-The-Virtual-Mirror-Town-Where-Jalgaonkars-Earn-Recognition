@@ -30,16 +30,17 @@ guidelines. It is written in the author's own words and should be read together 
 
 ## Prompt record
 
-The prompts below summarise the stages.
+The prompts below summarise the stages. 
 
 | Stage | Purpose of the prompt | Tool |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | 1 | Describe the idea, roles and workflow; ask for a first working prototype | Claude / Gemini |
 | 2 | Rules engine for peer-verified civic submissions, append-only points ledger, flag/strike/revival logic and a two-layer map | Claude / Gemini |
 | 3 | Mobile-friendly single-page interface with an SVG Prabhag map and role switching | Claude / Gemini |
 | 4 | Automated tests using Node's built-in test runner | Claude |
-| 5 | Ask the AI to critique the proposal; the limitations it raised and the author's mitigations | Claude / Gemini |
+| 5 | Ask the AI to critique the proposal; the limitations it raised and the author's mitigations | Claude / Gemini | 
 | 6 | Architecture and design documents and the PostgreSQL/PostGIS reference schema, reviewed against the author's own architecture draft | Claude |
+| 7 | Game-style interface (neon arena with Desi touches), levels, badges, leaderboard, quests, profile pictures, sound and screen effects, based on the author's design choices | Claude |
 
 ## Responsibility
 The author takes responsibility for the contents of this repository, including its limitations as stated in `README.md` and
