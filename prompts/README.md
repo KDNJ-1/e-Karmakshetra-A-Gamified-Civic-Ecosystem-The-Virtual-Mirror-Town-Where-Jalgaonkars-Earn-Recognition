@@ -28,17 +28,19 @@ guidelines. It is written in the author's own words and should be read together 
 
 **Principle:** AI was used as a tool to reach a better result, not as a replacement for the author's thinking and not as a copy-and-paste shortcut.
 
-## Prompt record
+## Prompt record (summarised)
 
-The prompts below summarise the stages. 
+The exact messages exchanged with the AI tools are **not published in this repository**. They contain the author's personal
+working notes and conversation context, and publishing them could expose personal information. Instead, each stage is
+summarised below, and the author can describe or demonstrate any stage on request.
 
 | Stage | Purpose of the prompt | Tool |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | 1 | Describe the idea, roles and workflow; ask for a first working prototype | Claude / Gemini |
 | 2 | Rules engine for peer-verified civic submissions, append-only points ledger, flag/strike/revival logic and a two-layer map | Claude / Gemini |
 | 3 | Mobile-friendly single-page interface with an SVG Prabhag map and role switching | Claude / Gemini |
 | 4 | Automated tests using Node's built-in test runner | Claude |
-| 5 | Ask the AI to critique the proposal; the limitations it raised and the author's mitigations | Claude / Gemini | 
+| 5 | Ask the AI to critique the proposal; the limitations it raised and the author's mitigations | Claude / Gemini |
 | 6 | Architecture and design documents and the PostgreSQL/PostGIS reference schema, reviewed against the author's own architecture draft | Claude |
 | 7 | Game-style interface (neon arena with Desi touches), levels, badges, leaderboard, quests, profile pictures, sound and screen effects, based on the author's design choices | Claude |
 
