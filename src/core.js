@@ -70,7 +70,7 @@
     const pseudonym = String(o.pseudonym || "").trim() || ("Citizen-" + (state.users.length + 1));
     if (state.users.find(u => norm(u.pseudonym) === norm(pseudonym))) throw new Error("Pseudonym already taken");
     const user = { id: nid(state, "u"), name, pseudonym, prabhag: o.prabhag, age: o.age, ageBracket: ageBracket(o.age),
-      role: o.role && ROLES[o.role] ? o.role : "spotter", official: !!o.official, isSaathi: !!o.isSaathi,
+      role: o.role && ROLES[o.role] ? o.role : "spotter", official: !!o.official, admin: !!(o.official && o.admin), townRoles: [], maker: false, isSaathi: !!o.isSaathi,
       isProfilePublic: o.isProfilePublic !== false, showOnLeaderboard: !!o.showOnLeaderboard,
       avatar: { type: "initials", value: "" }, verified: !!o.official };
     state.users.push(user);
@@ -249,7 +249,9 @@
   }
 
   const questXp = (state, uid) => (state.questClaims || []).filter(c => c.userId === uid).reduce((s, c) => s + c.xp, 0);
-  const totalXp = (state, uid) => Math.max(0, balance(state, uid) + questXp(state, uid));
+  /* XP counts points EARNED for verified outcomes (EARN and OFFSET), not spending or transfers, so buying a plot never lowers your level. */
+  const earnedXp = (state, uid) => state.ledger.filter(e => e.userId === uid && (e.type === "EARN" || e.type === "OFFSET")).reduce((t, e) => t + e.points, 0);
+  const totalXp = (state, uid) => Math.max(0, earnedXp(state, uid) + questXp(state, uid));
   function levelFor(xp) {
     let i = 0; LEVELS.forEach((l, k) => { if (xp >= l.xp) i = k; });
     const cur = LEVELS[i], nxt = LEVELS[i + 1] || null;
