@@ -4,7 +4,7 @@
   "use strict";
   const KEY = "ek_fx_v1";
   const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  let prefs = { fx: !reduce, sound: true };
+  let prefs = { fx: !reduce, sound: true, ambient: false };
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) prefs = Object.assign(prefs, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {} };
 
@@ -30,6 +30,25 @@
     error: () => { tone(180, 0, 0.16, "sawtooth", 0.05); tone(140, 0.12, 0.2, "sawtooth", 0.05); }
   };
   function play(name) { if (prefs.sound && SOUNDS[name]) SOUNDS[name](); }
+
+
+  /* ambient soundscape: synthesised noise, no audio files (water / bazaar / industrial hum). Off unless chosen. */
+  let ambNodes = null;
+  function ambient(kind) {
+    if (ambNodes) { try { ambNodes.src.stop(); ambNodes.lfo && ambNodes.lfo.stop(); } catch (e) {} ambNodes = null; }
+    if (!kind || !prefs.ambient) return;
+    const c = audio(); if (!c) return;
+    const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = c.createBiquadFilter(), g = c.createGain();
+    const cfg = { water: ["lowpass", 700, 0.018], bazaar: ["bandpass", 1200, 0.012], hum: ["lowpass", 160, 0.03] }[kind] || ["lowpass", 500, 0.01];
+    f.type = cfg[0]; f.frequency.value = cfg[1]; g.gain.value = cfg[2];
+    src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+    let lfo = null;
+    if (kind === "water") { lfo = c.createOscillator(); const lg = c.createGain(); lfo.frequency.value = 0.2; lg.gain.value = 200; lfo.connect(lg); lg.connect(f.frequency); lfo.start(); }
+    ambNodes = { src, lfo };
+  }
 
   /* confetti */
   let cv, cx, parts = [], raf = 0;
@@ -73,5 +92,5 @@
     document.documentElement.classList.toggle("fx-off", !prefs.fx);
   }
   document.documentElement.classList.toggle("fx-off", !prefs.fx);
-  window.FX = { play, confetti, pop, banner, setPref, get: () => Object.assign({}, prefs) };
+  window.FX = { ambient, play, confetti, pop, banner, setPref, get: () => Object.assign({}, prefs) };
 })();
