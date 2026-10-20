@@ -139,3 +139,11 @@ threshold for demonstration only (the policy value is 10).
 ## References
 Digital Personal Data Protection Act principles; participatory-design literature (Arnstein 1969); self-determination research
 on rewards (Deci, Koestner and Ryan 1999). Full list in the project dossier.
+
+## Optional shared demo mode
+
+`src/sync.js` can store the whole demo state at `rooms/<room>/state` in a Firebase Realtime Database. Every action runs inside a database transaction (`SYNC.transact`), so concurrent users do not overwrite each other. It is disabled unless `firebase-config.js` provides a config, and falls back to local mode on failure. Limitation: rules are enforced in client code and the room is open to anyone with the link; production would enforce rules server-side. See `docs/SHARED_MODE.md`.
+
+## Town layer (v7)
+
+`src/town.js` adds plots, storefronts, tax, SLA escalation, roles, disputes and theatre on top of `src/core.js`. Points move only through double-entry ledger pairs (SPEND/RECEIVE), so totals are conserved; XP counts EARN and OFFSET entries only. `src/townview.js` draws the canvas world and screens. See `docs/TOWN.md`.
