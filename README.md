@@ -23,15 +23,13 @@ shopfronts, server database (reference schema in `db/schema.sql`). See `docs/DES
 1. Download or clone this repository.
 2. In a terminal inside the folder run `python3 -m http.server 8000` (or `npm start`) and open <http://localhost:8000>.
    Opening `index.html` by double-click may fail because browsers block loading the sample data file.
-3. Open and check the link 'https://kdnj-1.github.io/e-Karmakshetra-A-Gamified-Civic-Ecosystem-The-Virtual-Mirror-Town-Where-Jalgaonkars-Earn-Recognition/'
+3. Or publish it free with GitHub Pages: Settings, Pages, Branch `main`, folder `/ (root)`.
 
 ## Run the tests
 Node.js 18+ (tested on Node 22): `npm test`. Expected: 34 tests pass.
 
 ## Environment variables
 None are needed for the prototype. `.env.example` lists placeholders for the planned server version.
-
-Virtual Mirror Town. Residents claim land on an empty plot grid, upgrade to storefronts, list products in a virtual mall, book the civic theatre, and officers review against deadlines. Rules and roadmap: docs/TOWN.md. Points are in-game recognition, never money.
 
 ## Demo walk-through (5 minutes)
 1. Choose **Official Demo (official)**, open **Official**: approve the report that is awaiting review. Peers who confirmed it are paid.
@@ -84,10 +82,18 @@ a two-layer map for location privacy, an adults-only pilot, and no claimed gover
 corrections, and this repository is the final version of that process. I used AI as a tool to reach a better result, not as a
 copy-and-paste shortcut.
 
-**Estimated share of AI-generated content:** about 90% of the code and 45% of the written documents were drafted by AI;
-the idea, workflow, rules, limitations and decisions are mine.
+**Estimated share of AI-generated content:** about [XX]% of the code and [XX]% of the written documents were drafted by AI;
+the idea, workflow, rules, limitations and decisions are mine. [Author: state your honest figures before submission.]
 
-The full record of how AI was used, and the prompts, is in the `prompts/` folder.
+A summary of how AI was used, stage by stage, is in the `prompts/` folder. The exact prompts are not published, to protect the author's personal information.
 
 ## Licence
 MIT. See `LICENSE`.
+
+## New in v7: the Virtual Mirror Town
+
+Claim land on an empty plot grid, upgrade to a storefront, list products in a virtual mall, book the civic theatre, and watch officers handle reviews against a deadline. Two canvas views (2.5D isometric and flat 2D), three themes, Field / data-saver mode. Full rules, what is built and what is roadmap: [docs/TOWN.md](docs/TOWN.md). Points are in-game recognition and are never money.
+
+## Optional: shared multi-person demo
+
+The demo works on a single device by default. For a live multi-user town (many people, one shared state), follow [docs/SHARED_MODE.md](docs/SHARED_MODE.md). It is off by default, uses invented names only, and its rules are enforced client-side (pilot demo, not production security).
