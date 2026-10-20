@@ -31,6 +31,8 @@ Node.js 18+ (tested on Node 22): `npm test`. Expected: 34 tests pass.
 ## Environment variables
 None are needed for the prototype. `.env.example` lists placeholders for the planned server version.
 
+Virtual Mirror Town. Residents claim land on an empty plot grid, upgrade to storefronts, list products in a virtual mall, book the civic theatre, and officers review against deadlines. Rules and roadmap: docs/TOWN.md. Points are in-game recognition, never money.
+
 ## Demo walk-through (5 minutes)
 1. Choose **Official Demo (official)**, open **Official**: approve the report that is awaiting review. Peers who confirmed it are paid.
 2. Choose **Asha-P4**, open **Ledger**: see +10 for her verified hazard report.
