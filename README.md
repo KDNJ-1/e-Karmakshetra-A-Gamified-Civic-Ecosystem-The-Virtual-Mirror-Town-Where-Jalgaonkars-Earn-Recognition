@@ -82,8 +82,8 @@ a two-layer map for location privacy, an adults-only pilot, and no claimed gover
 corrections, and this repository is the final version of that process. I used AI as a tool to reach a better result, not as a
 copy-and-paste shortcut.
 
-**Estimated share of AI-generated content:** about [XX]% of the code and [XX]% of the written documents were drafted by AI;
-the idea, workflow, rules, limitations and decisions are mine. [Author: state your honest figures before submission.]
+**Estimated share of AI-generated content:** about 90% of the code and 40% of the written documents were drafted by AI;
+the idea, workflow, rules, limitations and decisions are mine. 
 
 A summary of how AI was used, stage by stage, is in the `prompts/` folder. The exact prompts are not published, to protect the author's personal information.
 
