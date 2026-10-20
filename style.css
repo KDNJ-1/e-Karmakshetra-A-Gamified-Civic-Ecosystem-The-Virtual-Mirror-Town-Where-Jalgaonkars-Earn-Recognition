@@ -178,3 +178,28 @@ footer{max-width:1000px;margin:20px auto 0;font-size:.84rem;color:var(--muted);b
   .card{padding:14px}th,td{padding:7px 5px}
   .gamebar button{font-size:.68rem}
 }
+
+/* ---------- v7: themes, town, mall, stage ---------- */
+body[data-theme="khandesh"]{--bg:#1c120b;--panel:#2a1a10;--panel2:#3a2517;--fg:#fff1dc;--muted:#d1b08a;--line:#5a3b22;
+  --cyan:#e9b44c;--magenta:#c8553d;--saffron:#f28f3b;--teal:#6a994e;--gold:#f6c85f;--grass:#3d4a22;--grass2:#46552a;--road:#7a5230}
+body[data-theme="solar"]{--bg:#06201f;--panel:#0b2f2d;--panel2:#10403d;--fg:#f0fff4;--muted:#9fd8c3;--line:#1b5a54;
+  --cyan:#b6f04a;--magenta:#ffb703;--saffron:#ffb703;--teal:#2ec4b6;--gold:#eaff6b;--grass:#1c5a3a;--grass2:#226b45;--road:#2f7d6b}
+body[data-theme="khandesh"] #fxbg,body[data-theme="solar"] #fxbg{opacity:.55}
+.inl{font-size:.78rem;color:#c9d2ff;text-transform:uppercase;letter-spacing:.12em;margin:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;border-radius:99px;padding:7px 12px;font-size:.95rem}
+.seg button[aria-selected=true]{background:var(--cyan);color:#021a22;border-color:var(--cyan)}
+.tcard{padding:8px}
+canvas.town{width:100%;height:auto;max-height:70vh;display:block;border-radius:10px;background:rgba(0,0,0,.25);cursor:pointer;touch-action:manipulation;image-rendering:auto}
+.shop{border:1px solid var(--line);border-left:6px solid var(--ac,var(--cyan));border-radius:10px;padding:10px 12px;background:var(--panel);display:flex;flex-direction:column;gap:6px}
+.shop p{margin:0}
+.shop a{color:var(--cyan)}
+.swatch{width:34px;height:34px;border-radius:50%;padding:0;border:3px solid transparent}
+.swatch.on{border-color:#fff}
+.small{font-size:.85rem}
+/* Field mode / data saver: no animation, no decorative layers, lighter pages */
+body.field #fxbg,body.field #confetti{display:none}
+body.field *{animation:none!important;transition:none!important}
+body.field .top{box-shadow:none}
+#fieldBtn[aria-pressed=false]{text-decoration:none;opacity:.8}
+#fieldBtn[aria-pressed=true]{background:var(--cyan);color:#021a22}

@@ -21,15 +21,18 @@
     <h1>e-Karmakshetra</h1>
     <p class="deva" lang="mr">ई-कर्मक्षेत्र</p>
     <p class="sub">Virtual mirror town for participatory governance. <b>Prototype, fictional sample data.</b></p>
+    <p class="sub" id="syncnote" role="status"></p>
   </div>
   <div class="who">
     <label for="userSel">Playing as</label>
     <select id="userSel"></select>
     <div class="row">
-      <button id="sndBtn" class="chip" aria-pressed="true" title="Sound effects">🔊 Sound</button>
-      <button id="fxBtn" class="chip" aria-pressed="true" title="Screen effects">✨ FX</button>
+            <button id="fxBtn" class="chip" aria-pressed="true" title="Screen effects">✨ FX</button>
+      <button id="audBtn" class="chip" title="Audio: silent, retro chimes, organic ambient">🔊 Chimes</button>
+      <button id="fieldBtn" class="chip" aria-pressed="false" title="Field mode / data saver">⚡ Field · डेटा सेव्हर</button>
       <button id="resetBtn" class="chip">↺ Reset</button>
     </div>
+    <div class="row"><label for="themeSel" class="inl">Theme</label><select id="themeSel" aria-label="Colour theme"><option value="arcade">Civic Arcade</option><option value="khandesh">Khandeshi Vernacular</option><option value="solar">Solar-Punk</option></select></div>
     <div class="row more" id="more"></div>
   </div>
 </header>
@@ -54,6 +57,10 @@
 
 <script src="src/core.js"></script>
 <script src="src/fx.js"></script>
+<script src="src/town.js"></script>
+<script src="src/townview.js"></script>
+<script src="firebase-config.js"></script>
+<script src="src/sync.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

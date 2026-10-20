@@ -2,7 +2,7 @@
    Data is kept in the browser (localStorage). */
 (function () {
   "use strict";
-  const KEY = "ek_state_v3";
+  const KEY = "ek_state_v4";
   const S = EK.STATUS;
   let state, sample, tab = "map", uid = null, officialLayer = false, flash = null, minutes = 0, animate = true, rankWard = "";
   const $ = (s) => document.querySelector(s);
@@ -17,7 +17,8 @@
     kids.flat().forEach(c => c != null && el.append(c instanceof Node ? c : document.createTextNode(String(c))));
     return el;
   }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ state, minutes })); } catch (e) {} };
+  const shared = () => !!(window.SYNC && SYNC.enabled && SYNC.ref);
+  const save = () => { try { if (shared()) localStorage.setItem("ek_local_v3", JSON.stringify({ minutes, uid })); else localStorage.setItem(KEY, JSON.stringify({ state, minutes })); } catch (e) {} };
   const load = () => { try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.state) { state = d.state; minutes = d.minutes || 0; return true; } } catch (e) {} return false; };
   const me = () => state.users.find(u => u.id === uid);
   const user = (id) => state.users.find(u => u.id === id);
@@ -25,6 +26,20 @@
   const tagClass = (st) => ({ [S.PENDING]: "pending", [S.AWAITING]: "awaiting", [S.VERIFIED]: "verified", [S.REVISE]: "revise", [S.REJECTED]: "rejected", [S.TRIBUNAL]: "dispute" }[st]);
   const tag = (st) => h("span", { class: "tag " + tagClass(st) }, st.replace(/_/g, " ").toLowerCase());
   const xpOf = (id) => EK.totalXp(state, id);
+  const PK = "ek_prefs_v1"; let prefs = { theme: "arcade", audio: 1, field: null };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem(PK)) || {}); } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem(PK, JSON.stringify(prefs)); } catch (e) {} };
+  const fieldOn = () => prefs.field === null ? TOWN.shouldAutoFieldMode(navigator) : !!prefs.field;
+  const nowMs = () => Date.now() + ((state.town && state.town.clockOffset) || 0);
+  const townCtx = { h, state: () => state, me: () => me(), act: (...a) => act(...a), avatar: (u, n) => avatar(u, n), pName: (id) => pName(id), now: nowMs, rerender: () => render(),
+    field: fieldOn, fx: () => FX.get().fx, userName: (id) => { const u = user(id); return u ? (u.isProfilePublic ? u.pseudonym : "Anonymous resident") : "?"; } };
+  function applyPrefs() {
+    document.body.dataset.theme = prefs.theme; document.body.classList.toggle("field", fieldOn());
+    if (fieldOn()) FX.setPref("fx", false);
+    FX.setPref("sound", prefs.audio > 0); FX.setPref("ambient", prefs.audio === 2);
+    const u = state && me(); const w = u && state.prabhags.find(p => p.id === u.prabhag);
+    if (prefs.audio === 2 && w && !fieldOn()) FX.ambient(w.sound || "water"); else FX.ambient(null);
+  }
 
   /* ---------- avatars ---------- */
   function avatar(u, size) {
@@ -48,7 +63,7 @@
     const day = "2000-01-01";
     state = EK.newState(sample.prabhags);
     const byName = {}, faces = EK.AVATARS;
-    sample.users.forEach((u, i) => { byName[u.name] = EK.registerUser(state, { name: u.name, pseudonym: u.pseudonym, prabhag: u.prabhag, age: u.age, role: u.role, official: u.official, isSaathi: u.isSaathi }); });
+    sample.users.forEach((u, i) => { byName[u.name] = EK.registerUser(state, { name: u.name, pseudonym: u.pseudonym, prabhag: u.prabhag, age: u.age, role: u.role, official: u.official, admin: u.admin, isSaathi: u.isSaathi }); });
     const off = byName["Official Demo"];
     Object.values(byName).forEach((u, i) => { u.verified = true; if (!u.official) EK.setProfile(state, u.id, { showOnLeaderboard: true, avatar: i % 4 === 0 ? { type: "initials" } : { type: "emoji", value: faces[i % faces.length] } }); });
     const peers = sample.users.filter(u => !u.official).map(u => byName[u.name]);
@@ -59,22 +74,50 @@
       peers.filter(p => p.id !== by.id).slice(0, r.peers).forEach(p => EK.confirmReport(state, rep.id, p.id, day));
       if (r.approve) EK.officialApprove(state, rep.id, off.id, day);
     });
+    seedTown(byName);
     minutes = 0;
   }
+  function seedTown(by) {   // a lived-in sample town so judges see buildings, a shop and a show straight away
+    const now = Date.now(), adm = by["Official Demo"], o2 = by["Officer Two Demo"];
+    TOWN.ensure(state);
+    ["Asha Demo", "Farid Demo", "Kavya Demo", "Bhushan Demo", "Chitra Demo", "Gauri Demo", "Dinesh Demo"].forEach(n => TOWN.demoGrant(state, adm.id, by[n].id, n === "Asha Demo" ? 400 : n === "Dinesh Demo" ? 300 : 200, now));
+    const asha = by["Asha Demo"], farid = by["Farid Demo"], bh = by["Bhushan Demo"], gauri = by["Gauri Demo"], chitra = by["Chitra Demo"];
+    TOWN.claimPlot(state, asha.id, 1, 1, now); TOWN.verifyMaker(state, adm.id, asha.id, now); TOWN.upgradePlot(state, asha.id, state.town.plots[0].id, now); TOWN.upgradePlot(state, asha.id, state.town.plots[0].id, now);
+    const sh = TOWN.submitShop(state, asha.id, { name: "Asha Crochet Corner", desc: "Hand-embroidered crochet keychains made by a student, in many colours.", product: "Crochet keychains", template: "boutique", accent: "#ff3d9a", link: "https://example.com" }, now);
+    TOWN.reviewShop(state, adm.id, sh.id, true, "", now);
+    TOWN.claimPlot(state, farid.id, 2, 0, now); TOWN.claimPlot(state, by["Kavya Demo"].id, 0, 2, now); TOWN.claimPlot(state, bh.id, 0, 0, now);
+    TOWN.applyRole(state, gauri.id, "theatre_manager", now); TOWN.decideRole(state, adm.id, state.town.roleReqs[0].id, true, now);
+    const show = TOWN.proposeShow(state, chitra.id, { title: "Lake Clean-up Street Play", desc: "A 20 minute street play about keeping Mehrun Lake clean.", minutes: 20, startMs: now + 2 * 86400000, mode: "audio", ticket: 2, vodPrice: 1 }, now);
+    TOWN.reviewShow(state, gauri.id, show.id, true, "", now);
+  }
   const defaultUser = () => state.users.find(u => u.pseudonym === "Dinesh-P1");
+  function buildSeedState() { const keep = state, keepMin = minutes; seed(); const s = state; state = keep; minutes = keepMin; s.quests = sample.quests; return s; }
+  let pendingRender = false;
+  function softRender() {   // do not wipe what someone is typing when another person's change arrives
+    const a = document.activeElement;
+    if (a && a.closest && a.closest("#view") && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { pendingRender = true; return; }
+    render();
+  }
 
   /* ---------- actions with game feedback ---------- */
+  function celebrate(id0, before, xp0, ok, kind) {
+    flash = { type: "ok", text: ok };
+    const after = EK.levelFor(xpOf(id0)), gain = xpOf(id0) - xp0;
+    if (kind === "verified") { FX.play("xp"); FX.banner("VERIFIED ✓", "Points minted for the reporter and confirming peers"); FX.confetti(140); }
+    else if (after.index > before.index) { FX.play("level"); FX.banner("LEVEL UP: " + after.name, "Level " + after.level + " reached"); FX.confetti(160); }
+    else if (kind === "plot") { FX.play("level"); FX.confetti(120); FX.banner("PLOT UPGRADED", "Your town is growing"); }
+    else if (gain > 0) { FX.play("xp"); FX.pop("+" + gain + " XP"); FX.confetti(70); }
+    else FX.play("ok");
+  }
+  function fail(e) { flash = { type: "err", text: e.message || String(e) }; FX.play("error"); render(); }
   function act(fn, ok, kind) {
     const id0 = uid, before = EK.levelFor(xpOf(id0)), xp0 = xpOf(id0);
-    try {
-      fn(); save();
-      flash = { type: "ok", text: ok };
-      const after = EK.levelFor(xpOf(id0)), gain = xpOf(id0) - xp0;
-      if (kind === "verified") { FX.play("xp"); FX.banner("VERIFIED ✓", "Points minted for the reporter and confirming peers"); FX.confetti(140); }
-      else if (after.index > before.index) { FX.play("level"); FX.banner("LEVEL UP: " + after.name, "Level " + after.level + " reached"); FX.confetti(160); }
-      else if (gain > 0) { FX.play("xp"); FX.pop("+" + gain + " XP"); FX.confetti(70); }
-      else FX.play("ok");
-    } catch (e) { flash = { type: "err", text: e.message }; FX.play("error"); }
+    if (shared()) {   // shared mode: run the action atomically on the shared state
+      SYNC.transact((draft) => { const prev = state; state = draft; state.quests = sample.quests; try { fn(); } finally { state = prev; } })
+        .then(() => { save(); celebrate(id0, before, xp0, ok, kind); render(); }).catch(fail);
+      return;
+    }
+    try { fn(); save(); celebrate(id0, before, xp0, ok, kind); } catch (e) { flash = { type: "err", text: e.message }; FX.play("error"); }
     render();
   }
 
@@ -247,7 +290,7 @@
       h("p", {}, h("button", { class: "cta", onclick: () => act(() => { const x = EK.registerUser(state, { name: nm.value, pseudonym: ps.value, prabhag: pr.value, age: parseInt(ag.value, 10) }); uid = x.id; }, "Registered. Ask an official to verify you.") }, "Register")));
   }
 
-  const TABS = [["map", "🗺️", "Map", mapView], ["file", "✍️", "File", fileView], ["review", "🔍", "Review", reviewView], ["quests", "🎯", "Quests", questView], ["rank", "🏆", "Rank", rankView], ["me", "👤", "Me", meView]];
+  const TABS = [["map", "🗺️", "Map", mapView], ["town", "🏘️", "Town", () => TOWNUI.view(townCtx)], ["file", "✍️", "File", fileView], ["review", "🔍", "Review", reviewView], ["quests", "🎯", "Quests", questView], ["rank", "🏆", "Rank", rankView], ["me", "👤", "Me", meView]];
   const EXTRA = [["official", "Official", officialView], ["audit", "Audit", auditView], ["join", "Join", joinView]];
 
   function go(t) { tab = t; flash = null; animate = true; FX.play("click"); render(); window.scrollTo({ top: 0 }); }
@@ -259,7 +302,8 @@
     TABS.forEach(([id, ic, label]) => bar.append(h("button", { role: "tab", "aria-selected": String(tab === id), onclick: () => go(id) }, h("span", { class: "ti" }, ic), h("span", { class: "tl" }, label))));
     const more = $("#more"); more.innerHTML = "";
     EXTRA.forEach(([id, label]) => more.append(h("button", { class: "chip" + (tab === id ? " on" : ""), onclick: () => go(id) }, label)));
-    $("#sndBtn").setAttribute("aria-pressed", String(FX.get().sound)); $("#fxBtn").setAttribute("aria-pressed", String(FX.get().fx));
+    $("#fxBtn").setAttribute("aria-pressed", String(FX.get().fx)); $("#fieldBtn").setAttribute("aria-pressed", String(fieldOn()));
+    $("#audBtn").textContent = ["🔇 Silent", "🔊 Chimes", "🌿 Ambient"][prefs.audio]; $("#themeSel").value = prefs.theme;
     hud();
     const v = $("#view"); v.innerHTML = ""; v.className = animate ? "enter" : ""; animate = false;
     const u = me(), lim = EK.sessionLimit(u);
@@ -272,18 +316,42 @@
     v.append(entry[entry.length - 1]());
   }
 
-  function init() {
-    if (!load()) seed();
-    state.quests = sample.quests;   // quests always come from data/quests.json so edits apply
-    state.questClaims = state.questClaims || [];
-    uid = defaultUser().id;
-    $("#userSel").onchange = (e) => { uid = e.target.value; flash = null; animate = true; FX.play("click"); render(); };
-    $("#resetBtn").onclick = () => { seed(); state.quests = sample.quests; save(); uid = defaultUser().id; flash = { type: "ok", text: "Demo reset to sample data." }; animate = true; render(); };
-    $("#sndBtn").onclick = () => { FX.setPref("sound", !FX.get().sound); FX.play("click"); render(); };
+  function wireUI() {
+    $("#userSel").onchange = (e) => { uid = e.target.value; save(); flash = null; animate = true; FX.play("click"); render(); };
+    $("#resetBtn").onclick = () => {
+      if (shared()) {
+        if (!window.confirm("Reset the SHARED demo for everyone who is using it?")) return;
+        SYNC.reset(buildSeedState()).then(() => { flash = { type: "ok", text: "Shared demo reset to sample data." }; }).catch(fail); return;
+      }
+      seed(); state.quests = sample.quests; save(); uid = defaultUser().id; applyPrefs(); flash = { type: "ok", text: "Demo reset to sample data." }; animate = true; render();
+    };
+    $("#audBtn").onclick = () => { prefs.audio = (prefs.audio + 1) % 3; savePrefs(); applyPrefs(); FX.play("click"); render(); };
     $("#fxBtn").onclick = () => { FX.setPref("fx", !FX.get().fx); render(); };
-    setInterval(() => { minutes += 1; save(); const ul = me(); if (EK.breakDue(minutes) || !EK.sessionAllowed(ul, minutes)) render(); }, 60000);
-    render();
+    $("#fieldBtn").onclick = () => { prefs.field = !fieldOn(); savePrefs(); if (!prefs.field) FX.setPref("fx", !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)); applyPrefs(); render(); };
+    $("#themeSel").onchange = (e) => { prefs.theme = e.target.value; savePrefs(); applyPrefs(); render(); };
+    document.addEventListener("focusout", () => setTimeout(() => { const a = document.activeElement; if (pendingRender && !(a && a.closest && a.closest("#view") && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) { pendingRender = false; render(); } }, 50));
+    setInterval(() => { minutes += 1; save(); const ul = me(); if (ul && (EK.breakDue(minutes) || !EK.sessionAllowed(ul, minutes))) render(); }, 60000);
   }
+  function initLocal() {
+    if (!load()) seed();
+    state.quests = sample.quests; state.questClaims = state.questClaims || []; TOWN.ensure(state);
+    uid = defaultUser().id; applyPrefs(); render();
+  }
+  function initShared() {
+    let first = true; $("#view").textContent = "Connecting to the shared demo…";
+    SYNC.start({
+      seed: buildSeedState,
+      onStatus: (m) => { const n = $("#syncnote"); if (n) n.textContent = m; },
+      onState: (s) => {
+        state = s; state.quests = sample.quests;
+        if (first) { first = false; try { const l = JSON.parse(localStorage.getItem("ek_local_v3")); if (l) { minutes = l.minutes || 0; uid = l.uid; } } catch (e) {} }
+        if (!uid || !user(uid)) uid = (defaultUser() || state.users[0]).id;
+        TOWN.ensure(state); applyPrefs(); softRender();
+      }
+    }).then(() => { if (!SYNC.enabled) initLocal(); });   // fell back to this-device mode
+  }
+  function init() { wireUI(); if (window.SYNC && SYNC.enabled) initShared(); else initLocal(); }
+
   Promise.all([fetch("data/sample_data.json").then(r => r.json()), fetch("data/quests.json").then(r => r.json())])
     .then(([d, q]) => { sample = d; sample.quests = q.quests; init(); })
     .catch(() => { $("#view").textContent = "Could not load sample data. Serve this folder through a web server (see README) or use GitHub Pages."; });
