@@ -140,6 +140,15 @@ threshold for demonstration only (the policy value is 10).
 Digital Personal Data Protection Act principles; participatory-design literature (Arnstein 1969); self-determination research
 on rewards (Deci, Koestner and Ryan 1999). Full list in the project dossier.
 
+```mermaid
+graph LR
+  CORE["src/core.js: verify, ledger, quests"] --> TOWN["src/town.js: plots, shops, tax, SLA, theatre"]
+  CORE --> SEASON["src/season.js: Ward Wars, Boss events"]
+  TOWN --> VIEW["src/townview.js: canvas world + screens"]
+  SEASON --> VIEW
+  VIEW --> APP["app.js: UI, themes, field mode"]
+```
+
 ## Optional shared demo mode
 
 `src/sync.js` can store the whole demo state at `rooms/<room>/state` in a Firebase Realtime Database. Every action runs inside a database transaction (`SYNC.transact`), so concurrent users do not overwrite each other. It is disabled unless `firebase-config.js` provides a config, and falls back to local mode on failure. Limitation: rules are enforced in client code and the room is open to anyone with the link; production would enforce rules server-side. See `docs/SHARED_MODE.md`.
