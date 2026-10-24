@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   const T = window.TOWN, EK = window.EK;
-  let sub = "world", viewMode = "iso", wardSel = null, picked = null, raf = 0, last = 0;
+  let sub = "world", viewMode = "iso", wardSel = null, picked = null, raf = 0, last = 0, tod = "auto", rain = false, warSpan = "week";
   const walkers = [];                      // sample citizens (NPCs) and your own avatar; ghost mode: they pass through each other
   const bubbles = {};                      // userId -> { text, until }
   let me2 = { x: 1.5, y: 1.5, tx: 1.5, ty: 1.5 };
@@ -14,9 +14,9 @@
   function view(ctx) {
     const { h } = ctx, s = ctx.state(), u = ctx.me(); T.ensure(s);
     if (!wardSel || !s.prabhags.find(p => p.id === wardSel)) wardSel = u.prabhag;
-    const tabs = [["world", "🌍 World"], ["mall", "🛍️ Mall"], ["stage", "🎭 Stage"], ["plot", "🏠 My plot"], ["desk", "🛂 Desk"]];
+    const tabs = [["world", "🌍 World"], ["mall", "🛍️ Mall"], ["stage", "🎭 Stage"], ["wars", "⚔️ Wars"], ["plot", "🏠 My plot"], ["desk", "🛂 Desk"]];
     const seg = h("div", { class: "seg", role: "tablist" }, tabs.map(([id, l]) => h("button", { role: "tab", "aria-selected": String(sub === id), onclick: () => { sub = id; picked = null; ctx.rerender(); } }, l)));
-    const body = { world: world, mall: mall, stage: stage, plot: myplot, desk: desk }[sub](ctx);
+    const body = { world: world, mall: mall, stage: stage, wars: wars, plot: myplot, desk: desk }[sub](ctx);
     return h("div", { class: "stack" }, h("p", { class: "sub" }, "Points here are in-game recognition, never money. Everything in this town is a sample for the pilot demo: use invented names only."), seg, body);
   }
 
@@ -27,7 +27,10 @@
     const modeBtn = (id, l) => h("button", { class: "chip" + (viewMode === id ? " on" : ""), onclick: () => { viewMode = id; ctx.rerender(); } }, l);
     const plots = s.town.plots.filter(p => p.prabhag === wardSel && T.liveStatus(p) !== "demolished");
     const head = h("div", { class: "card" }, h("h2", {}, "Virtual Mirror Town"), h("p", { class: "sub" }, `Grid ${g.cols} × ${g.rows} · ${g.claimed} of ${g.capacity} plots claimed. The town grows as residents arrive (new row at 75% full). Tap an empty plot to see it, a building to see its owner.`),
-      h("div", { class: "row" }, sel, modeBtn("iso", "2.5D isometric"), modeBtn("flat", "Flat 2D"), h("span", { class: "muted small" }, "3D low-poly: roadmap")));
+      h("div", { class: "row" }, sel, modeBtn("iso", "2.5D isometric"), modeBtn("flat", "Flat 2D"), h("span", { class: "muted small" }, "3D low-poly: roadmap")),
+      h("div", { class: "row" }, [["auto", "🕒 Live time"], ["day", "🌞 Day"], ["dusk", "🌆 Dusk"], ["night", "🌙 Night"]].map(([id, l]) => h("button", { class: "chip" + (tod === id ? " on" : ""), onclick: () => { tod = id; ctx.rerender(); } }, l)),
+        h("button", { class: "chip" + (rain ? " on" : ""), onclick: () => { rain = !rain; ctx.rerender(); } }, "🌧️ Monsoon")),
+      bossMini(ctx));
     const info = h("div", { class: "card", id: "plotinfo", "aria-live": "polite" }); fillInfo(ctx, info);
     const phrases = h("div", { class: "card" }, h("h2", {}, "Say something (safe phrases)"), h("div", { class: "row" }, T.QUICK_PHRASES.map(p => h("button", { class: "chip", onclick: () => { bubbles[u.id] = { text: p.en, until: Date.now() + 6000 }; ctx.act(() => T.say(s, u.id, p.id, ctx.now()), "Sent.", null); } }, p.en + " · " + p.hi))),
       h("small", { class: "muted" }, "Only pre-set phrases are allowed, so there is no abuse or spam. Free-text private chat is on the roadmap (needs moderation and consent design)."));
@@ -69,8 +72,13 @@
     const plotsAll = () => s.town.plots.filter(p => p.prabhag === wardSel && T.liveStatus(p) !== "demolished");
     if (!walkers.length || walkers.wd !== wardSel) {
       walkers.length = 0; walkers.wd = wardSel;
-      s.users.filter(x => !x.official && x.prabhag === wardSel).slice(0, 4).forEach((x, i) => walkers.push({ id: x.id, x: Math.random() * g.cols, y: Math.random() * g.rows, tx: Math.random() * g.cols, ty: Math.random() * g.rows, npc: true, e: (x.avatar && x.avatar.type === "emoji") ? x.avatar.value : EK.AVATARS[i] }));
+      const locals = s.users.filter(x => !x.official && x.prabhag === wardSel).slice(0, 8);
+      for (let i = 0; i < 8; i++) { const x = locals[i]; walkers.push({ id: x ? x.id : "npc" + i, x: Math.random() * g.cols, y: Math.random() * g.rows, tx: Math.random() * g.cols, ty: Math.random() * g.rows, npc: true, pause: 0, e: x && x.avatar && x.avatar.type === "emoji" ? x.avatar.value : EK.AVATARS[i % EK.AVATARS.length] }); }
     }
+    const hour = new Date().getHours(), phase = tod !== "auto" ? tod : hour >= 6 && hour < 17 ? "day" : hour >= 17 && hour < 19 ? "dusk" : "night";
+    const today = T.dayOf(ctx.now()), festive = (s.quests || []).some(q => q.period === "festive" && q.from <= today && today <= q.to);
+    const drops = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 6 }));
+    let tick = 0;
     const ink = css("--fg", "#eaf0ff"), grass = css("--grass", "#1c3b2a"), grass2 = css("--grass2", "#21452f"), road = css("--road", "#2b3055");
     const tile = (x, y, fill, stroke, dash) => {
       c.beginPath();
@@ -117,7 +125,13 @@
         if (w.mine) { c.strokeStyle = css("--cyan", "#22e3ff"); c.lineWidth = 2; c.beginPath(); c.ellipse(px, py + 4, 15, 6, 0, 0, 7); c.stroke(); }
         const b = bubbles[w.id]; if (b && b.until > Date.now()) { c.font = "700 12px sans-serif"; const tw = c.measureText(b.text).width + 14; c.fillStyle = "#fff"; c.fillRect(px - tw / 2, py - 56, tw, 22); c.fillStyle = "#111"; c.fillText(b.text, px, py - 41); }
       });
-      if (!ctx.fx()) { c.fillStyle = "rgba(0,0,0,0)"; }
+      // time of day, lanterns, festive lights, rain
+      if (phase !== "day") { c.fillStyle = phase === "night" ? "rgba(6,10,45,.5)" : "rgba(255,110,40,.16)"; c.fillRect(0, 0, W, H); }
+      if (phase !== "day") s.town.plots.filter(p => p.prabhag === wardSel && T.liveStatus(p) !== "demolished").forEach(p => {
+        const [ax, ay] = anchor(p.x, p.y), gr = c.createRadialGradient(ax, ay - 10, 2, ax, ay - 10, iso ? 55 : 70); gr.addColorStop(0, phase === "night" ? "rgba(255,200,90,.65)" : "rgba(255,200,90,.35)"); gr.addColorStop(1, "rgba(255,200,90,0)");
+        c.fillStyle = gr; c.fillRect(ax - 80, ay - 90, 160, 160); });
+      if (festive) for (let i = 0; i < 18; i++) { const fx = (i + 0.5) * W / 18, fy = 8 + Math.sin(i * 1.3 + tick / 8) * 4; c.fillStyle = ["#ffd34e", "#ff3d9a", "#22e3ff", "#ff9f1c"][i % 4]; c.beginPath(); c.arc(fx, fy, 4, 0, 7); c.fill(); }
+      if (rain) { c.strokeStyle = "rgba(190,215,255,.55)"; c.lineWidth = 1.2; c.beginPath(); drops.forEach(d => { c.moveTo(d.x, d.y); c.lineTo(d.x - 3, d.y + 10); }); c.stroke(); }
     }
     cv.onclick = (ev) => {
       const r = cv.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width, py = (ev.clientY - r.top) * H / r.height; let x, y;
@@ -131,7 +145,13 @@
       if (!document.body.contains(cv)) return;
       if (animate && t - last > 45) {   // about 20 frames a second keeps phones cool
         last = t;
-        walkers.forEach(w => { const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy); if (d < 0.05) { w.tx = Math.random() * g.cols; w.ty = Math.random() * g.rows; } else { w.x += dx / d * 0.03; w.y += dy / d * 0.03; } });
+        tick++; if (tick % 160 === 0) { const w = walkers[Math.floor(Math.random() * walkers.length)], p = T.QUICK_PHRASES[Math.floor(Math.random() * T.QUICK_PHRASES.length)]; if (w) bubbles[w.id] = { text: p.en, until: Date.now() + 4000 }; }
+        walkers.forEach(w => {
+          if (w.pause > 0) { w.pause--; return; }
+          const dx = w.tx - w.x, dy = w.ty - w.y, d = Math.hypot(dx, dy);
+          if (d < 0.06) { const pl = plotsAll(); if (pl.length && Math.random() < 0.5) { const q = pl[Math.floor(Math.random() * pl.length)]; w.tx = q.x + 0.5; w.ty = q.y + 0.5; w.pause = 30; } else { w.tx = Math.random() * g.cols; w.ty = Math.random() * g.rows; } }
+          else { w.x += dx / d * 0.03; w.y += dy / d * 0.03; } });
+        if (rain) drops.forEach(d => { d.y += d.v; d.x -= 1; if (d.y > H) { d.y = -10; d.x = Math.random() * W; } });
         const dx = me2.tx - me2.x, dy = me2.ty - me2.y, d = Math.hypot(dx, dy); if (d > 0.04) { me2.x += dx / d * 0.07; me2.y += dy / d * 0.07; }
         drawAll();
       }
@@ -183,6 +203,26 @@
       h("p", {}, h("button", { class: "cta", onclick: () => ctx.act(() => T.proposeShow(s, u.id, { title: f.title.value, desc: f.desc.value, minutes: parseInt(f.min.value, 10), startMs: f.when.value ? new Date(f.when.value).getTime() : NaN, mode: f.mode.value, url: f.url.value, ticket: parseInt(f.tk.value, 10), vodPrice: f.vod.value === "" ? null : parseInt(f.vod.value, 10) }, now), "Proposal sent for review.", null) }, "Submit proposal")));
     const mine = s.town.shows.filter(x => x.performerId === u.id && x.status !== "APPROVED").map(x => h("p", {}, h("b", {}, x.title), " · ", h("span", { class: "tag " + (x.status === "REJECTED" ? "rejected" : "awaiting") }, x.status.toLowerCase().replace("_", " ")), x.reason ? " " + x.reason : ""));
     return h("div", { class: "stack" }, h("div", { class: "card" }, h("h2", {}, "Rangamanch: civic theatre"), h("p", { class: "sub" }, "Open-air amphitheatre and indoor Natyagruha share one schedule. Streams are embedded or linked (no video runs through our server). The stage is a pilot design: shows here are samples.")), list.length ? list : h("div", { class: "card" }, "No approved shows yet."), form, mine.length ? h("div", { class: "card" }, h("h2", {}, "My proposals"), mine) : null);
+  }
+
+  /* ---------- Wars (Ward Wars + Boss events) ---------- */
+  function bossMini(ctx) {
+    const { h } = ctx, s = ctx.state(), day = T.dayOf(ctx.now());
+    return h("div", { class: "bossmini" }, ctx.events().map(ev => { const b = SEASON.bossStatus(s, ev, day);
+      return h("div", { class: "row" }, h("span", { class: "bossico" }, ev.icon), h("small", {}, ev.name + ": "), h("div", { class: "hp", role: "progressbar", "aria-label": ev.name + " health", "aria-valuenow": String(b.pct), "aria-valuemin": "0", "aria-valuemax": "100" }, h("i", { style: "width:" + b.pct + "%" })), h("small", {}, b.status === "defeated" ? "defeated!" : b.hp + "/" + b.maxHp + " HP")); }));
+  }
+  function wars(ctx) {
+    const { h } = ctx, s = ctx.state(), u = ctx.me(), day = T.dayOf(ctx.now()), r = SEASON.wardWars(s, day, warSpan), max = Math.max(1, ...r.rows.map(x => x.perResident)), medal = ["🥇", "🥈", "🥉"];
+    const chips = h("div", { class: "row" }, [["week", "This week"], ["month", "This month"]].map(([id, l]) => h("button", { class: "chip" + (warSpan === id ? " on" : ""), onclick: () => { warSpan = id; ctx.rerender(); } }, l)));
+    const rows = r.rows.map(x => h("div", { class: "war" + (x.prabhag === u.prabhag ? " mine" : "") }, h("div", { class: "row" }, h("b", {}, (medal[x.rank - 1] || x.rank) + " " + x.name), h("small", { class: "muted" }, `${x.verified} verified · ${x.reviews} reviews · ${x.residents} residents`), h("b", { class: "wscore" }, x.perResident + " /resident")),
+      h("div", { class: "hp wide" }, h("i", { style: "width:" + Math.round(x.perResident / max * 100) + "%" }))));
+    const bosses = ctx.events().map(ev => { const b = SEASON.bossStatus(s, ev, day), why = SEASON.canClaim(s, u.id, ev, day), mine = b.participants.has(u.id);
+      return h("div", { class: "boss " + b.status }, h("div", { class: "bossface" }, ev.icon), h("div", { class: "bossbody" }, h("div", { class: "row" }, h("b", {}, ev.name), h("span", { lang: "hi", class: "deva2" }, ev.name_hi), h("span", { class: "tag " + (b.status === "defeated" ? "verified" : b.status === "active" ? "awaiting" : "pending") }, b.status)),
+        h("p", { class: "small" }, ev.text), h("div", { class: "hp wide", role: "progressbar", "aria-valuenow": String(b.pct), "aria-valuemin": "0", "aria-valuemax": "100", "aria-label": ev.name + " health" }, h("i", { style: "width:" + b.pct + "%" })),
+        h("small", {}, `${b.hp} / ${b.maxHp} HP · ${b.hits} verified reports · ${b.helpers} citizens helped${mine ? " · you helped!" : ""} · ${ev.from} to ${ev.to}`),
+        !u.official && !why ? h("p", {}, h("button", { class: "cta", onclick: () => ctx.claimBoss(ev) }, `Claim +${ev.xp} Quest XP`)) : h("small", { class: "muted" }, b.status === "defeated" && why ? " " + why : ""))); });
+    return h("div", { class: "stack" }, h("div", { class: "card" }, h("h2", {}, "Ward Wars: Prabhag vs Prabhag"), h("p", { class: "sub" }, "Teams are Prabhags. Nobody fights; Prabhags compete on verified civic work (10 per verified report + 1 per honest review), ranked per verified resident so a small ward can beat a big one. Season resets every week or month."), chips, rows),
+      h("div", { class: "card" }, h("h2", {}, "Community boss events"), h("p", { class: "sub" }, "The bosses are civic problems. Every verified report of the right kind, and every peer who confirmed it, takes HP off. Defeat it together and everyone who helped can claim Quest XP (recognition only)."), bosses));
   }
 
   /* ---------- My plot ---------- */
