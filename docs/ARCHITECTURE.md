@@ -147,3 +147,5 @@ on rewards (Deci, Koestner and Ryan 1999). Full list in the project dossier.
 ## Town layer (v7)
 
 `src/town.js` adds plots, storefronts, tax, SLA escalation, roles, disputes and theatre on top of `src/core.js`. Points move only through double-entry ledger pairs (SPEND/RECEIVE), so totals are conserved; XP counts EARN and OFFSET entries only. `src/townview.js` draws the canvas world and screens. See `docs/TOWN.md`.
+
+`src/season.js` computes Ward Wars and Boss events purely from the existing reports and audit trail (no new stored state except one Quest-XP claim per boss).
