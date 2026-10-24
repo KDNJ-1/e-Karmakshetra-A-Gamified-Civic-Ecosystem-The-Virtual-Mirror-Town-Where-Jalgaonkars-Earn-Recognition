@@ -1,0 +1,7 @@
+{
+  "_note": "Community boss events. A boss loses HP when reports of its category are verified inside its dates (perReport HP per verified report, perPeer HP per peer who confirmed it). Everyone who helped can claim Quest XP once it is defeated. No violence: the 'bosses' are civic problems. Edit this file to add events.",
+  "events": [
+    { "id": "kachra", "name": "Kachra Asur", "name_hi": "कचरा असुर", "icon": "👹", "category": "waste", "from": "2026-10-19", "to": "2026-12-31", "hp": 100, "perReport": 6, "perPeer": 1, "xp": 15, "text": "Diwali clean-up: every verified waste report weakens the Kachra Asur." },
+    { "id": "gaddha", "name": "Gaddha Rakshas", "name_hi": "गड्ढा राक्षस", "icon": "🕳️", "category": "mobility", "from": "2026-10-19", "to": "2026-12-31", "hp": 80, "perReport": 6, "perPeer": 1, "xp": 15, "text": "Broken roads and footpaths: verified mobility reports shrink the pothole beast." }
+  ]
+}
