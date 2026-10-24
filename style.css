@@ -203,3 +203,22 @@ body.field *{animation:none!important;transition:none!important}
 body.field .top{box-shadow:none}
 #fieldBtn[aria-pressed=false]{text-decoration:none;opacity:.8}
 #fieldBtn[aria-pressed=true]{background:var(--cyan);color:#021a22}
+
+/* v8: boss and ward wars */
+.hp{height:12px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;flex:1 1 90px;min-width:70px;border:1px solid var(--line)}
+.hp.wide{height:16px;width:100%}
+.hp i{display:block;height:100%;background:linear-gradient(90deg,#ff5c7a,#ff9f1c);transition:width .6s}
+.bossmini{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.bossico{font-size:1.3rem}
+.boss{display:flex;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel2);margin-top:8px}
+.boss.defeated{border-color:var(--ok)}
+.bossface{font-size:3rem;line-height:1;filter:drop-shadow(0 0 10px rgba(255,92,122,.6));animation:bossbob 2.4s ease-in-out infinite}
+.boss.defeated .bossface{filter:grayscale(1);animation:none;opacity:.6}
+@keyframes bossbob{50%{transform:translateY(-4px) scale(1.05)}}
+.bossbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.deva2{font-family:"Noto Sans Devanagari",sans-serif;color:var(--gold)}
+.war{padding:8px 10px;border-radius:10px;border:1px solid var(--line);margin-top:8px;background:var(--panel2)}
+.war.mine{border-color:var(--cyan);box-shadow:0 0 14px rgba(34,227,255,.25)}
+.war .wscore{margin-left:auto;color:var(--gold)}
+.war .hp i{background:linear-gradient(90deg,var(--teal),var(--cyan))}
+.hp.wide{flex:none}

@@ -32,7 +32,7 @@
   const fieldOn = () => prefs.field === null ? TOWN.shouldAutoFieldMode(navigator) : !!prefs.field;
   const nowMs = () => Date.now() + ((state.town && state.town.clockOffset) || 0);
   const townCtx = { h, state: () => state, me: () => me(), act: (...a) => act(...a), avatar: (u, n) => avatar(u, n), pName: (id) => pName(id), now: nowMs, rerender: () => render(),
-    field: fieldOn, fx: () => FX.get().fx, userName: (id) => { const u = user(id); return u ? (u.isProfilePublic ? u.pseudonym : "Anonymous resident") : "?"; } };
+    events: () => sample.events || [], claimBoss: (ev) => act(() => SEASON.claimBoss(state, uid, ev, todayStr()), "Boss reward claimed!", "verified"), field: fieldOn, fx: () => FX.get().fx, userName: (id) => { const u = user(id); return u ? (u.isProfilePublic ? u.pseudonym : "Anonymous resident") : "?"; } };
   function applyPrefs() {
     document.body.dataset.theme = prefs.theme; document.body.classList.toggle("field", fieldOn());
     if (fieldOn()) FX.setPref("fx", false);
@@ -89,6 +89,13 @@
     TOWN.applyRole(state, gauri.id, "theatre_manager", now); TOWN.decideRole(state, adm.id, state.town.roleReqs[0].id, true, now);
     const show = TOWN.proposeShow(state, chitra.id, { title: "Lake Clean-up Street Play", desc: "A 20 minute street play about keeping Mehrun Lake clean.", minutes: 20, startMs: now + 2 * 86400000, mode: "audio", ticket: 2, vodPrice: 1 }, now);
     TOWN.reviewShow(state, gauri.id, show.id, true, "", now);
+    // team play demo: a few verified reports dated today so Ward Wars and the Boss bars show real numbers
+    const day = TOWN.dayOf(now), peers = state.users.filter(u => !u.official && u.verified);
+    [["Asha Demo", "waste", "Garbage heap beside the sample school wall"], ["Farid Demo", "waste", "Burning waste near the sample bus stand"], ["Kavya Demo", "waste", "Open dumping behind the sample market"],
+     ["Bhushan Demo", "mobility", "Deep pothole on the sample ring road"], ["Gauri Demo", "waste", "Overflowing drain with plastic near the sample lake"]].forEach(([n, cat, text]) => {
+      const r = EK.submitReport(state, by[n].id, { category: cat, text, hasPhoto: true, photoName: "sample.jpg", lat: 21.0, lng: 75.57, day });
+      peers.filter(p => p.id !== by[n].id).slice(0, 10).forEach(p => EK.confirmReport(state, r.id, p.id, day)); EK.officialApprove(state, r.id, adm.id, day);
+    });
   }
   const defaultUser = () => state.users.find(u => u.pseudonym === "Dinesh-P1");
   function buildSeedState() { const keep = state, keepMin = minutes; seed(); const s = state; state = keep; minutes = keepMin; s.quests = sample.quests; return s; }
@@ -352,7 +359,7 @@
   }
   function init() { wireUI(); if (window.SYNC && SYNC.enabled) initShared(); else initLocal(); }
 
-  Promise.all([fetch("data/sample_data.json").then(r => r.json()), fetch("data/quests.json").then(r => r.json())])
-    .then(([d, q]) => { sample = d; sample.quests = q.quests; init(); })
+  Promise.all([fetch("data/sample_data.json").then(r => r.json()), fetch("data/quests.json").then(r => r.json()), fetch("data/events.json").then(r => r.json())])
+    .then(([d, q, e]) => { sample = d; sample.quests = q.quests; sample.events = e.events; init(); })
     .catch(() => { $("#view").textContent = "Could not load sample data. Serve this folder through a web server (see README) or use GitHub Pages."; });
 })();
