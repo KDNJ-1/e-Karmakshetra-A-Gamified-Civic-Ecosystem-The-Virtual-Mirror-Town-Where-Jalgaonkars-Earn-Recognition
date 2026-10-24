@@ -19,12 +19,20 @@ A playable layer on top of the civic engine. Points still come only from verifie
 | Views | 2.5D isometric and flat 2D canvas, with walking avatars (ghost mode: they pass through each other), 3 colour themes, retro chimes / organic ambient / silent. |
 | Field mode | Manual button plus auto-detect (Save-Data, 2G/3G, 2 GB RAM or less): no canvas, no animation, no decorative layers, plain tables. |
 
+## Team play and a living town (v8, `src/season.js`, 4 more tests)
+
+| Feature | Rule implemented |
+|---|---|
+| Ward Wars | Prabhag vs Prabhag, weekly or monthly. Score = 10 per verified report + 1 per honest review, ranked per verified resident so a small ward can beat a big one. Nobody fights; teams compete on verified civic work. |
+| Boss events | Bosses are civic problems (Kachra Asur = waste, Gaddha Rakshas = broken roads), defined in `data/events.json`. Each verified report in the category takes 6 HP and each peer who confirmed it 1 HP. Defeated together, every helper can claim Quest XP once (recognition only). |
+| Living town | Real-time day, dusk and night with lantern glow, festive string lights during festive quest dates, optional monsoon rain, eight citizens who walk, visit shops and greet with safe phrases (sample citizens, not real people). |
+
 XP is computed from points *earned* (not the wallet), so spending never lowers a level.
 
 ## Deliberately not built yet (roadmap, with reasons)
 
 - **Money, UPI, cash-out.** The app never touches rupees. Buying goes to the seller's own website. Real-money gaming and prepaid-instrument rules are strict in India; legal advice is needed before any conversion of points to money.
-- **Live multi-user MMORPG.** Optional shared mode exists (`docs/SHARED_MODE.md`); a real-time presence server (avatars seen live by all) is the next step.
+- **Live multi-user MMORPG** (other real players' avatars moving in your plaza). Optional shared mode exists (`docs/SHARED_MODE.md`); a real-time presence server (avatars seen live by all) is the next step.
 - **Low-poly 3D, WebRTC audio rooms, free-text private chat, offline photo queue, delivery tracking with OTP, server-side rules, k-anonymity map, Redis/Postgres ledger.** Designed in `docs/ARCHITECTURE.md`; the browser-only demo cannot honestly prove them.
 - **Real brand revenue share.** A business plan item, not software.
 
