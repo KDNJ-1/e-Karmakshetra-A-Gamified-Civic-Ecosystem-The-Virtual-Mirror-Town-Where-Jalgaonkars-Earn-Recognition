@@ -94,6 +94,9 @@ MIT. See `LICENSE`.
 
 Claim land on an empty plot grid, upgrade to a storefront, list products in a virtual mall, book the civic theatre, and watch officers handle reviews against a deadline. Two canvas views (2.5D isometric and flat 2D), three themes, Field / data-saver mode. Full rules, what is built and what is roadmap: [docs/TOWN.md](docs/TOWN.md). Points are in-game recognition and are never money.
 
+## New in v8: the Virtual Mirror Town
+Prabhags compete in Ward Wars and the whole town fights civic problems as Boss events (Kachra Asur, Gaddha Rakshas)
+
 ## Optional: shared multi-person demo
 
 The demo works on a single device by default. For a live multi-user town (many people, one shared state), follow [docs/SHARED_MODE.md](docs/SHARED_MODE.md). It is off by default, uses invented names only, and its rules are enforced client-side (pilot demo, not production security).
