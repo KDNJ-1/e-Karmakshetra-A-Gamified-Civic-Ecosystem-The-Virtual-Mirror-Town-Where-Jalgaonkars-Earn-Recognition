@@ -20,10 +20,7 @@ Real identity (Meri Pehchaan, DigiLocker), real JCMC boundaries, ISRO or other g
 shopfronts, server database (reference schema in `db/schema.sql`). See `docs/DESIGN.md`.
 
 ## Quick start
-1. Download or clone this repository.
-2. In a terminal inside the folder run `python3 -m http.server 8000` (or `npm start`) and open <http://localhost:8000>.
-   Opening `index.html` by double-click may fail because browsers block loading the sample data file.
-3. Or publish it free with GitHub Pages: Settings, Pages, Branch `main`, folder `/ (root)`.
+https://kdnj-1.github.io/e-Karmakshetra-A-Gamified-Civic-Ecosystem-The-Virtual-Mirror-Town-Where-Jalgaonkars-Earn-Recognition/
 
 ## Run the tests
 Node.js 18+ (tested on Node 22): `npm test`. Expected: 34 tests pass.
